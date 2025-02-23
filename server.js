@@ -103,6 +103,17 @@ wss.on('connection', (ws) => {
             // 合併action和body(encodedResponse)
             finalResponse = Buffer.concat([responseStopBuffer, encodedResponse]);
             break;
+          case Action.Jump:
+            decodedJumpMsg = protobuf.protobuf.Jump.decode(bodyBuffer);
+            console.log('Jump message:', decodedJumpMsg);
+            decodedJumpMsg.ID = ws.uuid;
+            response = protobuf.protobuf.Jump.create(decodedJumpMsg);
+            // response.FirstRequest = decodedJoinMsg;
+            encodedResponse = protobuf.protobuf.Jump.encode(response).finish();
+            let responseJumpBuffer = Buffer.from(action, 'utf8');
+            // 合併action和body(encodedResponse)
+            finalResponse = Buffer.concat([responseJumpBuffer, encodedResponse]);
+            break;
           default:
             console.error("未處理封包:", action);
             break;
