@@ -114,6 +114,17 @@ wss.on('connection', (ws) => {
             // 合併action和body(encodedResponse)
             finalResponse = Buffer.concat([responseJumpBuffer, encodedResponse]);
             break;
+          case Action.PositionInfo:
+            decodedPositionInfoMsg = protobuf.protobuf.PositionInfo.decode(bodyBuffer);
+            console.log('PositionInfo message:', decodedPositionInfoMsg);
+            // decodedPositionInfoMsg.ID = ws.uuid;
+            response = protobuf.protobuf.PositionInfo.create(decodedPositionInfoMsg);
+            // response.FirstRequest = decodedJoinMsg;
+            encodedResponse = protobuf.protobuf.PositionInfo.encode(response).finish();
+            let responsePositionInfoBuffer = Buffer.from(action, 'utf8');
+            // 合併action和body(encodedResponse)
+            finalResponse = Buffer.concat([responsePositionInfoBuffer, encodedResponse]);
+            break;
           default:
             console.error("未處理封包:", action);
             break;
