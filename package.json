@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "express": "^4.21.2",
+    "google-protobuf": "^3.21.4",
+    "protobufjs": "^7.4.0",
+    "uuid": "^11.0.5",
+    "ws": "^8.18.0"
+  },
+  "name": "ninja-battle-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
