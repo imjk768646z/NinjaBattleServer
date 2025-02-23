@@ -1,6 +1,7 @@
 const Action = {
-    'TestJoin': '1000',
-    'TestMove': '2000',
+    'Join': '1000',
+    'Move': '2000',
+    'Stop': '3000',
 }
 
 const ActionReverse = Object.fromEntries(Object.entries(Action).map(([k, v]) => [v, k]));

@@ -22,7 +22,6 @@ console.log('WebSocket server is running');
 // 房間管理 (key: roomId, value: array of players)
 const rooms = {};
 const checkRooms = {};
-let tempID = 0; //todo: 封包定義 玩家ID改為string
 
 wss.on('connection', (ws) => {
 
@@ -40,8 +39,6 @@ wss.on('connection', (ws) => {
   console.log('A new client connected');
 
   ws.on('message', (message) => {
-
-    tempID++;
     if (Buffer.isBuffer(message)) {
       try {
         // 解析封包前綴action
@@ -55,7 +52,7 @@ wss.on('connection', (ws) => {
 
 
         switch (action) {
-          case Action.TestJoin:
+          case Action.Join:
             // 解析封包body
             decodedJoinMsg = protobuf.protobuf.Join.decode(bodyBuffer);
             console.log('Join message:', decodedJoinMsg);
@@ -79,20 +76,32 @@ wss.on('connection', (ws) => {
             // 合併action和body(encodedResponse)
             finalResponse = Buffer.concat([responseActionBuffer, encodedResponse]);
             break;
-          case Action.TestMove:
+          case Action.Move:
             // 解析封包body
-            decodedMoveMsg = protobuf.protobuf.MoveInfo.decode(bodyBuffer);
+            decodedMoveMsg = protobuf.protobuf.Move.decode(bodyBuffer);
             console.log('Move message:', decodedMoveMsg);
 
-            decodedMoveMsg.FirstRequest = decodedJoinMsg;
-            response = protobuf.protobuf.MoveInfo.create(decodedMoveMsg);
+            // decodedMoveMsg.FirstRequest = decodedJoinMsg; //將另一個類別設定進來
+            decodedMoveMsg.ID = ws.uuid;
+            response = protobuf.protobuf.Move.create(decodedMoveMsg);
             // response.FirstRequest = decodedJoinMsg;
-            encodedResponse = protobuf.protobuf.MoveInfo.encode(response).finish();
+            encodedResponse = protobuf.protobuf.Move.encode(response).finish();
             let responseMoveBuffer = Buffer.from(action, 'utf8');
             // 合併action和body(encodedResponse)
             finalResponse = Buffer.concat([responseMoveBuffer, encodedResponse]);
             console.log("Move Final info:", response);
 
+            break;
+          case Action.Stop:
+            decodedStopMsg = protobuf.protobuf.Stop.decode(bodyBuffer);
+            console.log('Stop message:', decodedStopMsg);
+            decodedStopMsg.ID = ws.uuid;
+            response = protobuf.protobuf.Stop.create(decodedStopMsg);
+            // response.FirstRequest = decodedJoinMsg;
+            encodedResponse = protobuf.protobuf.Stop.encode(response).finish();
+            let responseStopBuffer = Buffer.from(action, 'utf8');
+            // 合併action和body(encodedResponse)
+            finalResponse = Buffer.concat([responseStopBuffer, encodedResponse]);
             break;
           default:
             console.error("未處理封包:", action);
