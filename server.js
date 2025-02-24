@@ -35,6 +35,7 @@ wss.on('connection', (ws) => {
   let assignedRoom = null;
   let decodedJoinMsg = null;
   let decodedMoveMsg = null;
+  let isPlayerDead = false;
 
   console.log('A new client connected');
 
@@ -136,6 +137,18 @@ wss.on('connection', (ws) => {
             // 合併action和body(encodedResponse)
             finalResponse = Buffer.concat([responseAttackBuffer, encodedResponse]);
             break;
+          case Action.Die:
+            decodedDieMsg = protobuf.protobuf.Die.decode(bodyBuffer);
+            console.log('Die message:', decodedDieMsg);
+            isPlayerDead = true;
+            decodedDieMsg.ID = ws.uuid;
+            response = protobuf.protobuf.Die.create(decodedDieMsg);
+
+            encodedResponse = protobuf.protobuf.Die.encode(response).finish();
+            let responseDieBuffer = Buffer.from(action, 'utf8');
+            // 合併action和body(encodedResponse)
+            finalResponse = Buffer.concat([responseDieBuffer, encodedResponse]);
+            break;
           default:
             console.error("未處理封包:", action);
             break;
@@ -143,6 +156,10 @@ wss.on('connection', (ws) => {
 
         if (assignedRoom) {
           broadcastToRoom(assignedRoom, finalResponse);
+          if (isPlayerDead) {
+            deleteRoom(assignedRoom);
+            isPlayerDead = false;
+          }
         }
 
         // 廣播訊息給所有已連接的客戶端
@@ -253,6 +270,16 @@ function checkPlayerOfRoom(roomId) {
         delete rooms[roomId]; // 移除房間
         console.log(`目前房間: ${JSON.stringify(rooms)}`);
       }
+    }
+  }
+}
+
+function deleteRoom(roomId) {
+  if (rooms[roomId]) {
+    if (rooms[roomId]["state"] == "start") {
+      console.log("其中一個玩家已死亡 通知前端並且倒數五秒後強制回到菜單");
+      delete rooms[roomId]; // 移除房間
+      console.log(`目前房間: ${JSON.stringify(rooms)}`);
     }
   }
 }
