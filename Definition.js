@@ -4,6 +4,7 @@ const Action = {
     'Stop': '3000',
     'Jump': '4000',
     'PositionInfo': '5000',
+    'Attack': '6000',
 }
 
 const ActionReverse = Object.fromEntries(Object.entries(Action).map(([k, v]) => [v, k]));
