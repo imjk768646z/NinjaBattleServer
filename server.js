@@ -149,6 +149,17 @@ wss.on('connection', (ws) => {
             // 合併action和body(encodedResponse)
             finalResponse = Buffer.concat([responseDieBuffer, encodedResponse]);
             break;
+          case Action.Damage:
+            decodedDamageMsg = protobuf.protobuf.Damage.decode(bodyBuffer);
+            console.log('Damage message:', decodedDamageMsg);
+            decodedDamageMsg.ID = ws.uuid;
+            response = protobuf.protobuf.Damage.create(decodedDamageMsg);
+            // response.FirstRequest = decodedJoinMsg;
+            encodedResponse = protobuf.protobuf.Damage.encode(response).finish();
+            let responseDamageBuffer = Buffer.from(action, 'utf8');
+            // 合併action和body(encodedResponse)
+            finalResponse = Buffer.concat([responseDamageBuffer, encodedResponse]);
+            break;
           default:
             console.error("未處理封包:", action);
             break;
