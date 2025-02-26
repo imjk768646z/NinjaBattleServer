@@ -22,7 +22,8 @@ console.log('WebSocket server is running');
 // 房間管理 (key: roomId, value: array of players)
 const rooms = {};
 const checkRooms = {};
-let intervalId = setInterval(generateHealthBuff, 1000);
+const minimumTime = 1000; //ms
+let intervalId = setInterval(generateHealthBuff, Math.floor(Math.random() * minimumTime) + minimumTime);
 
 wss.on('connection', (ws) => {
 
@@ -313,27 +314,24 @@ function broadcastToRoom(roomId, message) {
 }
 
 function generateHealthBuff() {
-  // console.log("generate health buff", Object.keys(rooms).length);
   if (Object.keys(rooms).length == 0) return;
+
   for (let roomId in rooms) {
     if (rooms[roomId]["state"] == "start") {
       console.log(`${roomId}房間已開始遊戲`);
-      let response = protobuf.protobuf.Damage.create({
-        ID: "player1",       // 這裡可以放玩家的 ID，例如 ws.uuid
-        DamagePower: 50      // 這裡設定造成的傷害數值
+      let response = protobuf.protobuf.HealthBuff.create({
+        X: 0.12,
+        Y: 0.34
       });
-      let encodedResponse = protobuf.protobuf.Damage.encode(response).finish();
-      let action = '8000';
-      let responseDamageBuffer = Buffer.from(action, 'utf8');
+      let encodedResponse = protobuf.protobuf.HealthBuff.encode(response).finish();
+      let responseHealthBuffBuffer = Buffer.from(Action.HealthBuff, 'utf8');
       // 合併action和body(encodedResponse)
-      let finalResponse = Buffer.concat([responseDamageBuffer, encodedResponse]);
+      let finalResponse = Buffer.concat([responseHealthBuffBuffer, encodedResponse]);
       rooms[roomId]["playersWS"].forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(finalResponse);
         }
       })
-    } else {
-      console.log(`${roomId}等待中`);
     }
   }
 }
