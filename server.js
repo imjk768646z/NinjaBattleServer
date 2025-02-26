@@ -23,7 +23,7 @@ console.log('WebSocket server is running');
 const rooms = {};
 const checkRooms = {};
 const minimumTime = 1000; //ms
-let intervalId = setInterval(generateHealthBuff, Math.floor(Math.random() * minimumTime) + minimumTime);
+// let intervalId = setInterval(generateHealthBuff, Math.floor(Math.random() * minimumTime) + minimumTime); //不定時產生補血包(待遊戲完善後再開啟)
 let isPositive = true;
 
 wss.on('connection', (ws) => {
@@ -59,8 +59,6 @@ wss.on('connection', (ws) => {
             // 解析封包body
             decodedJoinMsg = protobuf.protobuf.Join.decode(bodyBuffer);
             console.log('Join message:', decodedJoinMsg);
-
-
 
             //加入房間機制
             let roomId = findOrCreateRoom(ws, decodedJoinMsg.ID);
@@ -186,14 +184,6 @@ wss.on('connection', (ws) => {
           }
         }
 
-        // 廣播訊息給所有已連接的客戶端
-        /* wss.clients.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            // client.send(`Server received: ${message}`);
-            client.send(finalResponse);
-          }
-        }); */
-
       } catch (error) {
         console.error('Decode error:', error);
       }
@@ -208,51 +198,20 @@ wss.on('connection', (ws) => {
 
     if (assignedRoom) {
       removePlayerFromRoom(assignedRoom, ws);
-      checkPlayerOfRoom(assignedRoom, ws);
-      /* if (rooms[assignedRoom].length == 1) {
-        if (checkRooms[assignedRoom]) {
-          clearInterval(checkRooms[assignedRoom]);
-          delete checkRooms[assignedRoom];
-          console.log(`檢查房間: ${Object.keys(checkRooms).length}`);
-          console.log("倒數五秒後讓玩家離線");
-        }
-      } */
-
-
+      checkPlayerOfRoom(assignedRoom);
     }
-    // if (intervalId) {
-    //   clearInterval(intervalId);
-    // }
   });
 });
 
 function findOrCreateRoom(ws, playerId) {
-  // 尋找尚未滿的房間
-  /* for (let roomId in rooms) {
-    if (rooms[roomId].length < 2) {
-      rooms[roomId].push(ws);
-      console.log(`加入房間: ${JSON.stringify(rooms)}`);
-      let intervalId = setInterval(() => { console.log("check players is arrived two.") }, 1000);
-
-      checkRooms[roomId] = intervalId;
-      console.log(`檢查房間: ${Object.keys(checkRooms).length}`);
-      return roomId;
-    }
-  } */
-
-  // 沒有空房間，創建新房間
-  /* let newRoomId = `room-${Object.keys(rooms).length + 1}`;
-  rooms[newRoomId] = [ws];
-  console.log(`建立房間: ${JSON.stringify(rooms)}`);
-  return newRoomId; */
-
   // 尋找尚未滿的房間
   for (let roomId in rooms) {
     if (rooms[roomId]["playersID"].length < 2) {
       rooms[roomId]["playersID"].push(ws.uuid);
       rooms[roomId]["state"] = "start";
       rooms[roomId]["playersWS"].push(ws);
-      console.log(`加入房間: ${JSON.stringify(rooms)}`);
+      // console.log(`加入房間: ${JSON.stringify(rooms)}`);
+      console.log(`加入房間: ${roomId} 所有玩家: ${rooms[roomId]["playersID"]}`);
       // setTimeout(generateHealthBuff, 2000); //temp test
       return roomId;
     }
@@ -261,25 +220,20 @@ function findOrCreateRoom(ws, playerId) {
   // 沒有空房間，創建新房間
   let newRoomId = `room-${Object.keys(rooms).length + 1}`;
   rooms[newRoomId] = { state: "wait", playersID: [ws.uuid], playersWS: [ws] };
-  console.log(`建立房間: ${JSON.stringify(rooms)}`);
+  // console.log(`建立房間: ${JSON.stringify(rooms)}`);
+  console.log(`建立房間: ${newRoomId}`);
   for (let roomId in rooms) {
     if (rooms[roomId]["playersID"].length < 2) {
-      console.log(`房間人數: ${JSON.stringify(rooms[roomId]["playersID"])}`);
+      console.log(`房間名稱: ${roomId} 房間的玩家: ${JSON.stringify(rooms[roomId]["playersID"])}`);
     }
   }
   return newRoomId;
 }
 
 function removePlayerFromRoom(roomId, ws) {
-  /* if (rooms[roomId]) {
-    rooms[roomId] = rooms[roomId].filter(client => client !== ws);
-    if (rooms[roomId].length === 0) {
-      delete rooms[roomId]; // 移除空房間
-    }
-  } */
   if (rooms[roomId]) {
     rooms[roomId]["playersID"] = rooms[roomId]["playersID"].filter(client => client !== ws.uuid);
-
+    rooms[roomId]["playersWS"] = rooms[roomId]["playersWS"].filter(client => client !== ws);
     if (rooms[roomId]["playersID"].length === 0) {
       delete rooms[roomId]; // 移除空房間
       console.log(`玩家已離線: ${JSON.stringify(rooms)}`);
@@ -304,19 +258,13 @@ function deleteRoom(roomId) {
     if (rooms[roomId]["state"] == "start") {
       console.log("其中一個玩家已死亡 通知前端並且倒數五秒後強制回到菜單");
       delete rooms[roomId]; // 移除房間
+      assignedRoom = null;
       console.log(`目前房間: ${JSON.stringify(rooms)}`);
     }
   }
 }
 
 function broadcastToRoom(roomId, message) {
-  /* if (rooms[roomId]) {
-    rooms[roomId].forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  } */
   if (rooms[roomId]) {
     rooms[roomId]["playersWS"].forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
@@ -337,10 +285,6 @@ function generateHealthBuff() {
   for (let roomId in rooms) {
     if (rooms[roomId]["state"] == "start") {
       console.log(`${roomId}房間已開始遊戲`);
-      /* let response = protobuf.protobuf.HealthBuff.create({
-        X: 0.12,
-        Y: 0.34
-      }); */
       let response = protobuf.protobuf.HealthBuff.create(healthBuffPosition);
       let encodedResponse = protobuf.protobuf.HealthBuff.encode(response).finish();
       let responseHealthBuffBuffer = Buffer.from(Action.HealthBuff, 'utf8');
