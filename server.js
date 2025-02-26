@@ -24,6 +24,7 @@ const rooms = {};
 const checkRooms = {};
 const minimumTime = 1000; //ms
 let intervalId = setInterval(generateHealthBuff, Math.floor(Math.random() * minimumTime) + minimumTime);
+let isPositive = true;
 
 wss.on('connection', (ws) => {
 
@@ -161,6 +162,17 @@ wss.on('connection', (ws) => {
             // 合併action和body(encodedResponse)
             finalResponse = Buffer.concat([responseDamageBuffer, encodedResponse]);
             break;
+          case Action.HealthGet:
+            decodedHealthGetMsg = protobuf.protobuf.HealthGet.decode(bodyBuffer);
+            console.log('HealthGet message:', decodedHealthGetMsg);
+            decodedHealthGetMsg.ID = ws.uuid;
+            response = protobuf.protobuf.HealthGet.create(decodedHealthGetMsg);
+            // response.FirstRequest = decodedJoinMsg;
+            encodedResponse = protobuf.protobuf.HealthGet.encode(response).finish();
+            let responseHealthGetBuffer = Buffer.from(action, 'utf8');
+            // 合併action和body(encodedResponse)
+            finalResponse = Buffer.concat([responseHealthGetBuffer, encodedResponse]);
+            break;
           default:
             console.error("未處理封包:", action);
             break;
@@ -241,6 +253,7 @@ function findOrCreateRoom(ws, playerId) {
       rooms[roomId]["state"] = "start";
       rooms[roomId]["playersWS"].push(ws);
       console.log(`加入房間: ${JSON.stringify(rooms)}`);
+      // setTimeout(generateHealthBuff, 2000); //temp test
       return roomId;
     }
   }
@@ -316,13 +329,19 @@ function broadcastToRoom(roomId, message) {
 function generateHealthBuff() {
   if (Object.keys(rooms).length == 0) return;
 
+  let healthBuffPosition;
+  let spawnRange = 630;
+  if (isPositive) { healthBuffPosition = { X: Math.floor(Math.random() * spawnRange), Y: 0 } }
+  else { healthBuffPosition = { X: -(Math.floor(Math.random() * spawnRange)), Y: 0 } }
+  isPositive = !isPositive;
   for (let roomId in rooms) {
     if (rooms[roomId]["state"] == "start") {
       console.log(`${roomId}房間已開始遊戲`);
-      let response = protobuf.protobuf.HealthBuff.create({
+      /* let response = protobuf.protobuf.HealthBuff.create({
         X: 0.12,
         Y: 0.34
-      });
+      }); */
+      let response = protobuf.protobuf.HealthBuff.create(healthBuffPosition);
       let encodedResponse = protobuf.protobuf.HealthBuff.encode(response).finish();
       let responseHealthBuffBuffer = Buffer.from(Action.HealthBuff, 'utf8');
       // 合併action和body(encodedResponse)

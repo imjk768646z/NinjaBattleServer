@@ -8,6 +8,7 @@ const Action = {
     'Die': '1007',
     'Damage': '1008',
     'HealthBuff': '1009',
+    'HealthGet': '1010',
 }
 
 const ActionReverse = Object.fromEntries(Object.entries(Action).map(([k, v]) => [v, k]));
