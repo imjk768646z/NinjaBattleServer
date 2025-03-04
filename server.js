@@ -60,22 +60,26 @@ wss.on('connection', (ws) => {
             decodedJoinMsg = protobuf.protobuf.Join.decode(bodyBuffer);
             console.log('Join message:', decodedJoinMsg);
 
-            //加入房間機制
-            let roomId = findOrCreateRoom(ws, decodedJoinMsg.ID);
-            // 設定值
-            decodedJoinMsg.ID = ws.uuid;
-            decodedJoinMsg.GameState = rooms[roomId]["state"];
-            decodedJoinMsg.AllPlayers = rooms[roomId]["playersID"];
-            // 建立回應封包
-            response = protobuf.protobuf.Join.create(decodedJoinMsg);
+            if (decodedJoinMsg.IsQuit) { //玩家結束配對，退出房間
+              deleteRoom(assignedRoom);
+              assignedRoom = null;
+            } else {                     //進入房間配對
+              let roomId = findOrCreateRoom(ws, decodedJoinMsg.ID);
+              // 設定值
+              decodedJoinMsg.ID = ws.uuid;
+              decodedJoinMsg.GameState = rooms[roomId]["state"];
+              decodedJoinMsg.AllPlayers = rooms[roomId]["playersID"];
+              // 建立回應封包
+              response = protobuf.protobuf.Join.create(decodedJoinMsg);
 
-            assignedRoom = roomId;
+              assignedRoom = roomId;
 
-            encodedResponse = protobuf.protobuf.Join.encode(response).finish();
-            // 將action轉為Uint8Array
-            let responseActionBuffer = Buffer.from(action, 'utf8');
-            // 合併action和body(encodedResponse)
-            finalResponse = Buffer.concat([responseActionBuffer, encodedResponse]);
+              encodedResponse = protobuf.protobuf.Join.encode(response).finish();
+              // 將action轉為Uint8Array
+              let responseActionBuffer = Buffer.from(action, 'utf8');
+              // 合併action和body(encodedResponse)
+              finalResponse = Buffer.concat([responseActionBuffer, encodedResponse]);
+            }
             break;
           case Action.Move:
             // 解析封包body
@@ -255,6 +259,15 @@ function checkPlayerOfRoom(roomId) {
 
 function deleteRoom(roomId) {
   if (rooms[roomId]) {
+
+    if (rooms[roomId]["state"] == "wait" && rooms[roomId]["playersID"].length < 2) {
+      console.log("玩家取消配對");
+      delete rooms[roomId]; // 移除房間
+      assignedRoom = null;
+      console.log(`目前房間: ${JSON.stringify(rooms)}`);
+      return;
+    }
+
     if (rooms[roomId]["state"] == "start") {
       console.log("其中一個玩家已死亡 通知前端並且倒數五秒後強制回到菜單");
       delete rooms[roomId]; // 移除房間
