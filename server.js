@@ -249,6 +249,13 @@ function checkPlayerOfRoom(roomId) {
   if (rooms[roomId]) {
     if (rooms[roomId]["state"] == "start") {
       if (rooms[roomId]["playersID"].length == 1) {
+        // 通知前端有玩家斷線 強制退出遊戲
+        const error = { ErrorMsg: "Disconnect" };
+        let response = protobuf.protobuf.Error.create(error);
+        let encodedResponse = protobuf.protobuf.Error.encode(response).finish();
+        let responseErrorBuffer = Buffer.from(Action.Error, 'utf8');
+        let finalResponse = Buffer.concat([responseErrorBuffer, encodedResponse]);
+        broadcastToRoom(roomId, finalResponse);
         console.log("房間只剩一個玩家 通知前端並且倒數五秒後強制回到菜單");
         delete rooms[roomId]; // 移除房間
         console.log(`目前房間: ${JSON.stringify(rooms)}`);
