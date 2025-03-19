@@ -56,7 +56,8 @@ wss.on('connection', (ws) => {
             assignedRoom = null;
             return;
           } else {             // 建立或進入房間
-            const roomId = findOrCreateRoom(ws, joinMsg.ID);
+            // const roomId = findOrCreateRoom(ws, joinMsg.ID);
+            const roomId = createRoom(ws); //for single player
             joinMsg.ID = ws.uuid;
             joinMsg.GameState = rooms[roomId].state;
             joinMsg.AllPlayers = rooms[roomId].playersID;
@@ -109,11 +110,11 @@ function handleAction(ws, action, bodyBuffer) {
     return null;
   }
   const msg = proto.decode(bodyBuffer);
-  // console.log(`[Packet Action]:${ActionReverse[action]} \n[Packet Body]:${JSON.stringify(msg)}`);
+  console.log(`[Packet Action]:${ActionReverse[action]} \n[Packet Body]:${JSON.stringify(msg)}`);
   // 除了PositionInfo以外都加入uuid
-  if (action !== Action.PositionInfo) {
+  /* if (action !== Action.PositionInfo || action !== Action.Damage) {
     msg.ID = ws.uuid;
-  }
+  } */
   return createFinalResponse(action, msg, proto);
 }
 
@@ -138,6 +139,17 @@ function findOrCreateRoom(ws, playerId) {
       console.log(`房間名稱: ${roomId} 玩家: ${JSON.stringify(rooms[roomId].playersID)}`);
     }
   }
+  return newRoomId;
+}
+
+function createRoom(ws) {
+  let newRoomId = `room-${Object.keys(rooms).length + 1}`;
+  rooms[newRoomId] = { state: "start", playersID: [ws.uuid], playersWS: [ws] };
+  console.log(`建立房間: ${newRoomId}`);
+
+  const aiId = `AI-${uuid()}`;
+  rooms[newRoomId].playersID.push(aiId);
+  // aiBehaviorScripts[aiId] = createAIScript(roomId, aiId);
   return newRoomId;
 }
 
