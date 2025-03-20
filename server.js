@@ -16,6 +16,7 @@ const { Action, ActionReverse } = require('./Definition.js');
 console.log('WebSocket server is running');
 
 const rooms = {}; // 房間管理 (key: roomId, value: player's information)
+const aiBehaviorTree = {}; // AI行為
 const minimumTime = 1000; //ms
 // let intervalId = setInterval(generateHealthBuff, Math.floor(Math.random() * minimumTime) + minimumTime); //不定時產生補血包(待遊戲完善後再開啟)
 let isPositive = true;
@@ -110,7 +111,7 @@ function handleAction(ws, action, bodyBuffer) {
     return null;
   }
   const msg = proto.decode(bodyBuffer);
-  console.log(`[Packet Action]:${ActionReverse[action]} \n[Packet Body]:${JSON.stringify(msg)}`);
+  // console.log(`[Packet Action]:${ActionReverse[action]} \n[Packet Body]:${JSON.stringify(msg)}`);
   // 除了PositionInfo以外都加入uuid
   /* if (action !== Action.PositionInfo || action !== Action.Damage) {
     msg.ID = ws.uuid;
@@ -144,13 +145,59 @@ function findOrCreateRoom(ws, playerId) {
 
 function createRoom(ws) {
   let newRoomId = `room-${Object.keys(rooms).length + 1}`;
-  rooms[newRoomId] = { state: "start", playersID: [ws.uuid], playersWS: [ws] };
-  console.log(`建立房間: ${newRoomId}`);
-
   const aiId = `AI-${uuid()}`;
-  rooms[newRoomId].playersID.push(aiId);
-  // aiBehaviorScripts[aiId] = createAIScript(roomId, aiId);
+  rooms[newRoomId] = {
+    state: "start",
+    playersID: [ws.uuid, aiId],
+    playersWS: [ws],
+  };
+
+  console.log(`建立房間: ${newRoomId}`);
+  aiBehaviorTree[aiId] = createAIScript(newRoomId, aiId);
   return newRoomId;
+}
+
+function createAIScript(roomId, aiId) {
+  const script = [
+    { action: Action.Attack, data: {}, delay: 500 },
+    { action: Action.Move, data: { IsGoRight: false }, delay: 4500 },
+    { action: Action.Jump, data: {}, delay: 1000 },
+    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 1000 },
+    { action: Action.Attack, data: {}, delay: 500 },
+    { action: Action.Move, data: { IsGoRight: true }, delay: 300 },
+    { action: Action.Jump, data: {}, delay: 1000 },
+    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 1000 },
+    { action: Action.Attack, data: {}, delay: 500 },
+    { action: Action.Move, data: { IsGoRight: false }, delay: 200 },
+    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 500 },
+    { action: Action.Move, data: { IsGoRight: true }, delay: 500 },
+    { action: Action.Jump, data: {}, delay: 1000 },
+    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 1000 },
+  ];
+
+  let index = 0;
+
+  function executeNextAction() {
+    if (!rooms[roomId] || !rooms[roomId].playersID.includes(aiId)) {
+      return;
+    }
+
+    const step = script[index];
+    index = (index + 1) % script.length;
+
+    const proto = protoMap[step.action];
+    if (!proto) return;
+
+    const msg = proto.create({ ...step.data, ID: aiId });
+    const encodedResponse = proto.encode(msg).finish();
+    const actionBuffer = Buffer.from(step.action, 'utf8');
+    const finalResponse = Buffer.concat([actionBuffer, encodedResponse]);
+
+    broadcastToRoom(roomId, finalResponse);
+    setTimeout(executeNextAction, step.delay);
+  }
+
+  setTimeout(executeNextAction, 2000); //延遲兩秒才開始執行腳本
 }
 
 function removePlayerFromRoom(roomId, ws) {
