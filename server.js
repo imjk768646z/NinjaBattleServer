@@ -150,6 +150,7 @@ function createRoom(ws) {
     state: "start",
     playersID: [ws.uuid, aiId],
     playersWS: [ws],
+    aiTimeout: []
   };
 
   console.log(`建立房間: ${newRoomId}`);
@@ -164,76 +165,76 @@ function createAIScript(roomId, aiId) {
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 1800 },
     { action: Action.Jump, data: {}, delay: 1000 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 1000 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 1000 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: true }, delay: 400 },
     { action: Action.Jump, data: {}, delay: 1000 },
-    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 1000 },
+    { action: Action.Stop, data: { IsStopGoRight: true }, delay: 1000 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 200 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 500 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 500 },
     { action: Action.Move, data: { IsGoRight: true }, delay: 300 },
     { action: Action.Jump, data: {}, delay: 900 },
-    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 1000 },
+    { action: Action.Stop, data: { IsStopGoRight: true }, delay: 1000 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 200 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 200 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 200 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: true }, delay: 200 },
     { action: Action.Jump, data: {}, delay: 900 },
-    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 200 },
+    { action: Action.Stop, data: { IsStopGoRight: true }, delay: 200 },
     { action: Action.Jump, data: {}, delay: 500 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 200 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 200 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 200 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: true }, delay: 100 },
     { action: Action.Jump, data: {}, delay: 1500 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: true }, delay: 3300 },
     { action: Action.Jump, data: {}, delay: 800 },
-    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 200 },
+    { action: Action.Stop, data: { IsStopGoRight: true }, delay: 200 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 100 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 100 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 100 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: true }, delay: 200 },
     { action: Action.Jump, data: {}, delay: 800 },
-    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 100 },
+    { action: Action.Stop, data: { IsStopGoRight: true }, delay: 100 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 100 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 100 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 100 },
     { action: Action.Attack, data: {}, delay: 600 },
     { action: Action.Attack, data: {}, delay: 800 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 700 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 500 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 500 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 200 },
     { action: Action.Jump, data: {}, delay: 850 },
     { action: Action.Jump, data: {}, delay: 1000 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 500 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 500 },
     { action: Action.Jump, data: {}, delay: 500 },
     { action: Action.Attack, data: {}, delay: 1000 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 200 },
     { action: Action.Jump, data: {}, delay: 1000 },
     { action: Action.Attack, data: {}, delay: 1000 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 600 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 600 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 3800 },
     { action: Action.Jump, data: {}, delay: 1000 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 100 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 100 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: false }, delay: 500 },
     { action: Action.Jump, data: {}, delay: 800 },
-    { action: Action.Stop, data: { IsStopGoRight: false}, delay: 500 },
+    { action: Action.Stop, data: { IsStopGoRight: false }, delay: 500 },
     { action: Action.Move, data: { IsGoRight: true }, delay: 100 },
-    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 500 },
+    { action: Action.Stop, data: { IsStopGoRight: true }, delay: 500 },
     { action: Action.Attack, data: {}, delay: 500 },
     { action: Action.Move, data: { IsGoRight: true }, delay: 100 },
     { action: Action.Jump, data: {}, delay: 800 },
     { action: Action.Attack, data: {}, delay: 1000 },
     { action: Action.Attack, data: {}, delay: 1000 },
     { action: Action.Attack, data: {}, delay: 1000 },
-    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 100 },
+    { action: Action.Stop, data: { IsStopGoRight: true }, delay: 100 },
     { action: Action.Move, data: { IsGoRight: true }, delay: 3250 },
-    { action: Action.Stop, data: { IsStopGoRight: true}, delay: 500 },
+    { action: Action.Stop, data: { IsStopGoRight: true }, delay: 500 },
   ];
 
   let index = 0;
@@ -255,10 +256,12 @@ function createAIScript(roomId, aiId) {
     const finalResponse = Buffer.concat([actionBuffer, encodedResponse]);
 
     broadcastToRoom(roomId, finalResponse);
-    setTimeout(executeNextAction, step.delay);
+    const timeoutID = setTimeout(executeNextAction, step.delay);
+    rooms[roomId].aiTimeout.push(timeoutID);
   }
 
-  setTimeout(executeNextAction, 2000); //延遲兩秒才開始執行腳本
+  const initTimeoutID = setTimeout(executeNextAction, 2000); //延遲兩秒才開始執行腳本
+  rooms[roomId].aiTimeout.push(initTimeoutID);
 }
 
 function removePlayerFromRoom(roomId, ws) {
@@ -301,6 +304,8 @@ function deleteRoom(roomId) {
 
     // 其中一名玩家已死亡，通知前端結束遊戲
     if (rooms[roomId].state == "start") {
+      rooms[roomId].aiTimeout.forEach(t => clearTimeout(t));
+      delete rooms[roomId].aiTimeout;
       delete rooms[roomId]; // 移除房間
       assignedRoom = null;
       // console.log(`目前房間: ${JSON.stringify(rooms)}`);
